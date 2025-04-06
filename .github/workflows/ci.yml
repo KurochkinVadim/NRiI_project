@@ -14,7 +14,7 @@ jobs:
         with:
           context: ./docker_app/flask_app
           push: true
-          tags: yourusername/flask-app:latest
+          tags: kurochkinvadim/flask-app:latest
           secrets: |
             DOCKER_HUB_TOKEN=${{ secrets.DOCKER_HUB_TOKEN }}
 
