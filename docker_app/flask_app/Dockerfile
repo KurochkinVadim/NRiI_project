@@ -8,4 +8,4 @@ WORKDIR /app
 COPY --from=builder /root/.local/lib/python3.9/site-packages /root/.local/lib/python3.9/site-packages
 ENV PYTHONPATH=/root/.local/lib/python3.9/site-packages
 COPY app.py .
-CMD ["python", "app.py"]
+CMD ["python", "-m", "flask", "run", "--host=0.0.0.0", "--port=5000"]
