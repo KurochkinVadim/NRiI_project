@@ -3,6 +3,21 @@ name: Run Tests
 on: [push, pull_request]
 
 jobs:
+
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          tags: yourusername/flask-app:latest
+          secrets: |
+            DOCKER_HUB_TOKEN=${{ secrets.DOCKER_HUB_TOKEN }}
+
+
   lint:
     runs-on: ubuntu-latest
     steps:
