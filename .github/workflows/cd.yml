@@ -29,23 +29,24 @@ jobs:
       - name: Push Docker image
         run: docker push $DOCKER_IMAGE_NAME:$GITHUB_SHA
         
-      - name: Install jq
-        run: sudo apt-get install -y jq
-
-      - name: Trigger Deploy with jq
+      - name: Trigger Render Deploy
         env:
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
           RENDER_SERVICE_ID: ${{ secrets.RENDER_SERVICE_ID }}
         run: |
-          jq -n \
-            --arg image "${{ secrets.DOCKER_HUB_USERNAME }}/pr5-app:$GITHUB_SHA" \
-            '{
-              clearCache: true,
-              image: $image
-            }' > payload.json
+          # 1. Создаем минимальный JSON файл
+          echo '{"clearCache":true}' > payload.json
     
+          # 2. Отправляем запрос без указания образа
           curl -v -X POST \
             -H "Authorization: Bearer $RENDER_API_KEY" \
             -H "Content-Type: application/json" \
             --data-binary @payload.json \
             "https://api.render.com/v1/services/$RENDER_SERVICE_ID/deploys"
+    
+          # 3. Вручную обновляем образ через Render API
+          curl -v -X PATCH \
+            -H "Authorization: Bearer $RENDER_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{"image":"${{ secrets.DOCKER_HUB_USERNAME }}/pr5-app:$GITHUB_SHA"}' \
+            "https://api.render.com/v1/services/$RENDER_SERVICE_ID"
