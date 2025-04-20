@@ -29,27 +29,23 @@ jobs:
       - name: Push Docker image
         run: docker push $DOCKER_IMAGE_NAME:$GITHUB_SHA
         
-      - name: Trigger Render Deploy
+      - name: Install jq
+        run: sudo apt-get install -y jq
+
+      - name: Trigger Deploy with jq
         env:
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
           RENDER_SERVICE_ID: ${{ secrets.RENDER_SERVICE_ID }}
-          DOCKER_IMAGE_NAME: ${{ secrets.DOCKER_HUB_USERNAME }}/pr5-app
         run: |
-          # Формируем корректный тег образа
-          FULL_IMAGE_TAG="$DOCKER_IMAGE_NAME:$GITHUB_SHA"
+          jq -n \
+            --arg image "${{ secrets.DOCKER_HUB_USERNAME }}/pr5-app:$GITHUB_SHA" \
+            '{
+              clearCache: true,
+              image: $image
+            }' > payload.json
     
-          # Создаем валидный JSON вручную (без jq)
-          JSON_PAYLOAD="{\"clearCache\":true,\"image\":\"$FULL_IMAGE_TAG\"}"
-    
-          echo "Generated JSON payload:"
-          echo "$JSON_PAYLOAD"
-    
-          # Отправляем запрос с подробным логированием
           curl -v -X POST \
             -H "Authorization: Bearer $RENDER_API_KEY" \
             -H "Content-Type: application/json" \
-            -d "$JSON_PAYLOAD" \
-            "https://api.render.com/v1/services/$RENDER_SERVICE_ID/deploys" || true
-    
-          # Дополнительная проверка ответа
-          echo "Deployment triggered successfully"
+            --data-binary @payload.json \
+            "https://api.render.com/v1/services/$RENDER_SERVICE_ID/deploys"
