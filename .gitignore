@@ -1,2 +1,3 @@
 # Исключение из игнора (если нужно)
 !important.log
+pr8/minikube-linux-amd64
